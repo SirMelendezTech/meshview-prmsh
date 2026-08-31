@@ -1,0 +1,58 @@
+name: meshview-prmsh
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: meshview-prmsh-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: meshview
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: meshview
+      TZ: America/Puerto_Rico
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U meshview -d meshview"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    networks:
+      - internal
+
+  meshview:
+    image: ghcr.io/pablorevilla-meshtastic/meshview:latest
+    container_name: meshview-prmsh
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      TZ: America/Puerto_Rico
+    volumes:
+      - ./config:/etc/meshview
+      - ./data/meshview:/var/lib/meshview
+      - ./logs:/var/log/meshview
+    ports:
+      # Local-only; Nginx Proxy Manager reaches the container over the proxy network.
+      - "127.0.0.1:8081:8081"
+    healthcheck:
+      test:
+        - CMD
+        - /opt/venv/bin/python
+        - -c
+        - "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8081/health', timeout=5).status==200 else 1)"
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+    networks:
+      - internal
+      - proxy
+
+networks:
+  internal:
+    driver: bridge
+  proxy:
+    external: true
+    name: proxy_default

@@ -45,3 +45,8 @@ __pycache__/
 .DS_Store
 Thumbs.db
 packets.db-journal
+
+# Deployment secrets / runtime data
+deploy/**/.env
+deploy/**/data/
+deploy/**/logs/
