@@ -69,11 +69,32 @@ SSL tab → request a new Let's Encrypt cert, **Force SSL** + **HTTP/2**.
 
 Point DNS `meshview.prmsh.com` → this host's public IP before requesting the cert.
 
-## Updating
+## Repository / git workflow
+
+This checkout is the **production source** and lives on the fork:
+
+| Remote     | URL                                                   | Use                          |
+|------------|-------------------------------------------------------|------------------------------|
+| `origin`   | `git@github.com:SirMelendezTech/meshview-prmsh.git`   | production repo — push here  |
+| `upstream` | `https://github.com/pablorevilla-meshtastic/meshview` | the upstream project         |
+
+`master` tracks `origin/master`. **Before making changes, always check upstream:**
+
+```bash
+git fetch upstream
+git log --oneline master..upstream/master     # what's new upstream
+git merge upstream/master                      # pull it in when appropriate
+git push origin master
+```
+
+The `deploy/prmsh/` overlay is only on the fork; upstream never carries it.
+
+## Updating the running stack
 
 ```bash
 cd /home/master/meshview/deploy/prmsh
-docker compose pull
+git pull                 # latest prod config from the fork
+docker compose pull      # latest meshview image
 docker compose up -d
 ```
 
