@@ -33,6 +33,9 @@ services:
       - ./config:/etc/meshview
       - ./data/meshview:/var/lib/meshview
       - ./logs:/var/log/meshview
+      # prmsh customisation: adds the "Configuración Recomendada" menu link
+      # (https://prmsh.com/es/settings/). Overlays the template baked into the image.
+      - ../../meshview/templates/base.html:/app/meshview/templates/base.html:ro
     ports:
       # Local-only; Nginx Proxy Manager reaches the container over the proxy network.
       - "127.0.0.1:8081:8081"
