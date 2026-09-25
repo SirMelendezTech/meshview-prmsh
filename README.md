@@ -1,6 +1,32 @@
 
-# Meshview
+# Meshview — PRMesh
+
 ![Start Page](screenshots/animated.gif)
+
+Este es el fork de [Meshview](https://github.com/pablorevilla-meshtastic/meshview) que
+corre **[meshview.prmsh.com](https://meshview.prmsh.com)**, el monitor en tiempo real de
+la malla Meshtastic de Puerto Rico — tráfico de mensajes, posición de nodos y telemetría
+de la comunidad **PRMesh**.
+
+## La comunidad PRMesh
+
+- 🌐 Sitio de la comunidad y guía de configuración recomendada: **[prmsh.com](https://prmsh.com)**
+- 📡 Monitor en vivo: **[meshview.prmsh.com](https://meshview.prmsh.com)**
+- 📆 **Red Semanal** (`#PRMeshNet`): el chequeo periódico de la malla — ver
+  [`deploy/prmsh/docs/red-semanal.md`](deploy/prmsh/docs/red-semanal.md) para cómo
+  participar y cómo funciona la página `/net`.
+
+## Este fork
+
+- Sigue al proyecto original ([pablorevilla-meshtastic/meshview](https://github.com/pablorevilla-meshtastic/meshview))
+  como `upstream`, mezclando sus releases cuando aplica.
+- El despliegue de producción (Docker Compose, config, workflow de git) está documentado
+  en [`deploy/prmsh/README.md`](deploy/prmsh/README.md).
+- Cambios específicos de PRMesh (idioma español por defecto, límites del mapa para
+  Puerto Rico/Vieques/Culebra, link de configuración recomendada, etc.) viven en este
+  repo y no se envían a upstream salvo que sean fixes de alcance general.
+
+---
 
 The project serves as a real-time monitoring and diagnostic tool for the Meshtastic mesh network. It provides detailed insights into network activity, including message traffic, node positions, and telemetry data.
 
