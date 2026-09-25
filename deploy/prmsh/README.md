@@ -7,8 +7,13 @@ public Meshtastic MQTT broker, backed by PostgreSQL, all in Docker.
 
 | Service            | Image                                              | Purpose                          |
 |--------------------|----------------------------------------------------|----------------------------------|
-| `meshview-prmsh`   | `ghcr.io/pablorevilla-meshtastic/meshview:latest`  | MQTT ingest + web UI/API (`mvrun.py`) |
+| `meshview-prmsh`   | built locally from `../../Dockerfile` (fork source) | MQTT ingest + web UI/API (`mvrun.py`) |
 | `meshview-prmsh-db`| `postgres:16-alpine`                               | Database                         |
+
+`meshview-prmsh` used to run the prebuilt `ghcr.io/pablorevilla-meshtastic/meshview:latest`
+image, but that meant fork-only fixes (like the ones merged in from upstream 3.0.8)
+never reached production. It now builds from this repo's own `Dockerfile`, so
+`master` on `origin` is what actually runs.
 
 TLS is **not** handled here. The container is published only on `127.0.0.1:8081`
 and also joined to the existing `proxy_default` network so **Nginx Proxy Manager**
@@ -92,9 +97,10 @@ The `deploy/prmsh/` overlay is only on the fork; upstream never carries it.
 ## Updating the running stack
 
 ```bash
-cd /home/master/meshview/deploy/prmsh
-git pull                 # latest prod config from the fork
-docker compose pull      # latest meshview image
+cd /home/master/meshview
+git pull origin master   # latest fork source
+cd deploy/prmsh
+docker compose build     # rebuild the meshview image from source
 docker compose up -d
 ```
 

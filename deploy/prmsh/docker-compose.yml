@@ -21,7 +21,10 @@ services:
       - internal
 
   meshview:
-    image: ghcr.io/pablorevilla-meshtastic/meshview:latest
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    image: meshview-prmsh:local
     container_name: meshview-prmsh
     restart: unless-stopped
     depends_on:

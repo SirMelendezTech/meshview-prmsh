@@ -8,3 +8,6 @@ env/
 *.db-wal
 backups/
 *.db.gz
+
+# Production deploy data (config, postgres volume, logs) — never part of the image
+deploy/
