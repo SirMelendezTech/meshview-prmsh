@@ -38,20 +38,35 @@ _LANG_CACHE = {}
 routes = web.RouteTableDef()
 
 
-def _config_bool(section: str, key: str, default: bool = False) -> bool:
-    return str(CONFIG.get(section, {}).get(key, default)).lower() in ("1", "true", "yes", "on")
+def _coerce_bool(value, default: bool = False) -> bool:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        return value.lower() in ("1", "true", "yes", "on")
+    return bool(value) if value is not None else default
 
 
-def _config_int(section: str, key: str, default: int = 0) -> int:
+def _coerce_int(value, default: int = 0) -> int:
     try:
-        return int(CONFIG.get(section, {}).get(key, default))
+        return int(value)
     except (TypeError, ValueError):
         return default
 
 
+def _coerce_str(value, default: str = "") -> str:
+    return str(value) if value is not None else str(default)
+
+
+def _config_bool(section: str, key: str, default: bool = False) -> bool:
+    return _coerce_bool(CONFIG.get(section, {}).get(key, default), default)
+
+
+def _config_int(section: str, key: str, default: int = 0) -> int:
+    return _coerce_int(CONFIG.get(section, {}).get(key, default), default)
+
+
 def _config_str(section: str, key: str, default: str = "") -> str:
-    value = CONFIG.get(section, {}).get(key, default)
-    return str(value) if value is not None else default
+    return _coerce_str(CONFIG.get(section, {}).get(key, default), default)
 
 
 def _cleanup_status_file() -> str:
@@ -681,12 +696,7 @@ async def api_config(request):
             return section.get(key, fallback=default)
 
         def get_bool(section, key, default=False):
-            val = get(section, key, default)
-            if isinstance(val, bool):
-                return "true" if val else "false"
-            if isinstance(val, str):
-                return "true" if val.lower() in ("1", "true", "yes", "on") else "false"
-            return "true" if bool(val) else "false"
+            return "true" if _coerce_bool(get(section, key, default), default) else "false"
 
         def get_float(section, key, default=0.0):
             try:
@@ -695,14 +705,10 @@ async def api_config(request):
                 return float(default)
 
         def get_int(section, key, default=0):
-            try:
-                return int(get(section, key, default))
-            except Exception:
-                return default
+            return _coerce_int(get(section, key, default), default)
 
         def get_str(section, key, default=""):
-            val = get(section, key, default)
-            return str(val) if val is not None else str(default)
+            return _coerce_str(get(section, key, default), default)
 
         # ------------------ SITE ------------------
         site = CONFIG.get("site", {})
@@ -1019,9 +1025,15 @@ async def api_traceroute(request):
     # --------------------------------------------
     # Final API output
     # --------------------------------------------
-    initiator, target = traceroute.endpoints(
-        from_node_id, to_node_id, any(tr["done"] for tr in tr_groups)
-    )
+    # tr_groups can hold observations of both the forward leg (done=False) and
+    # the return leg (done=True) of the SAME packet id, but the `packet` row
+    # itself only ever stores one direction (whichever leg's envelope won the
+    # ON CONFLICT DO NOTHING insert). tr_groups is ordered by import_time_us,
+    # and each Traceroute row is written in the same envelope-processing call
+    # as its packet insert attempt, so the earliest tr_groups entry is the
+    # best available signal for which leg the stored packet direction matches.
+    done = tr_groups[0]["done"] if tr_groups else False
+    initiator, target = traceroute.endpoints(from_node_id, to_node_id, done)
     return web.json_response(
         {
             "packet": {

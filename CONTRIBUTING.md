@@ -79,6 +79,8 @@ How to report:
 - Use a **clear and descriptive title**.  
 - Include reproduction steps and expected vs. actual behavior.  
 
+⚠️ Security issues should **not** be reported in public issues. Instead, email us at **meshview-maintainers@proton.me**.  
+
 ---
 
 ### Suggesting Enhancements

@@ -1,3 +1,4 @@
+import hashlib
 import logging
 import re
 import time
@@ -37,8 +38,14 @@ def storage_packet_id(packet) -> int | None:
         return None
 
     from_node_id = getattr(packet, "from", 0) or 0
-    now_us = int(time.time() * 1_000_000)
-    return -(now_us * 2048 + (from_node_id & 0x7FF))
+    # id-less packets need a synthetic id; hash the full node id together with a
+    # nanosecond timestamp so distinct nodes reporting in the same microsecond
+    # (bursty MQTT traffic, coarse OS clocks) don't fold onto the same id and get
+    # silently dropped by the ON CONFLICT DO NOTHING insert below.
+    digest = hashlib.blake2b(
+        f"{time.time_ns()}:{from_node_id}".encode(), digest_size=8
+    ).digest()
+    return -(int.from_bytes(digest, "big") & 0x7FFFFFFFFFFFFFFF | 1)
 
 
 def storage_to_node_id(packet) -> int:
@@ -133,8 +140,8 @@ async def process_envelope(topic, env):
 
                 if node:
                     node.node_id = node_id
-                    node.long_name = map_report.long_name
-                    node.short_name = map_report.short_name
+                    node.long_name = normalize_node_name(map_report.long_name)
+                    node.short_name = normalize_node_name(map_report.short_name)
                     node.hw_model = hw_model
                     node.role = role
                     if not node.channel:
@@ -149,8 +156,8 @@ async def process_envelope(topic, env):
                     node = Node(
                         id=user_id,
                         node_id=node_id,
-                        long_name=map_report.long_name,
-                        short_name=map_report.short_name,
+                        long_name=normalize_node_name(map_report.long_name),
+                        short_name=normalize_node_name(map_report.short_name),
                         hw_model=hw_model,
                         role=role,
                         channel=env.channel_id,
