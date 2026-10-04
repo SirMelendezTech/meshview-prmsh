@@ -227,22 +227,11 @@ async function loadData() {
             }
         }));
 
-    // 3. Determine which nodes are actually used in edges
-    const usedNodeIDs = new Set();
-    edges.forEach(e => {
-        usedNodeIDs.add(e.source);
-        usedNodeIDs.add(e.target);
-    });
-
-    // 4. Remove unused (no-edge) nodes
-    nodes = nodes.filter(n => usedNodeIDs.has(n.name));
-
-    // 5. Double safety: remove any edges referencing removed nodes
-    edges = edges.filter(e =>
-        usedNodeIDs.has(e.source) && usedNodeIDs.has(e.target)
-    );
-
-    // 6. Now ready to build dropdown & render
+    // 3. Now ready to build dropdown & render.
+    // Note: nodes without edges are kept and shown as isolated points —
+    // edges only exist when recent traceroute/NeighborInfo packets are
+    // available, so pruning edge-less nodes here would hide entire
+    // channels (e.g. LongFast) whenever that data is temporarily absent.
     populateChannelDropdown();
 }
 
